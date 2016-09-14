@@ -20,10 +20,7 @@
       <ul class="list-group">
         <% entries.each do |entry| %>
         <li class="list-group-item entries-entry"><a href="/diary/entry/<%= entry[:id] %>">
-          <%= 
-            # entry[:body].split(/\n/).first 
-            entry[:title]
-          %></a></li>
+          <%= entry[:title] %></a></li>
         <% end %>
       </ul>
     </div>
