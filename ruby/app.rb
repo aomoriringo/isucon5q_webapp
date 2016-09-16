@@ -448,10 +448,10 @@ SQL
     puts "relation set ok"
 
     @redis.save
-    Open3.capture3("bash -c 'sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
+    o, e, s = Open3.capture3("bash -c 'sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
     puts "redis dump backup done!!"
 
-    ''
+    "#{o}\n#{e}\n#{s}"
   end
 
 
