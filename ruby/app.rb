@@ -222,8 +222,9 @@ LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
 
-    friends = @rs.hgetall(current_user[:id])
-    friends_ids = friends.keys
+    f = @rs.hgetall(current_user[:id])
+    friends = f.to_a
+    friends_ids = f.keys
     entries_of_friends_query = <<SQL
 SELECT id, user_id, SUBSTRING(body, '\n', 1) AS title, created_at
 FROM entries
