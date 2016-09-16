@@ -209,14 +209,16 @@ LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
 
-    entries_of_friends = []
-    #db.query('SELECT id, user_id, SUBSTRING_INDEX(body, "\n", 1) AS title, created_at FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-    db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-      next unless is_friend?(entry[:user_id])
-      entry[:title] = entry[:body].split(/\n/).first
-      entries_of_friends << entry
-      break if entries_of_friends.size >= 10
-    end
+    friends = @rs.hgetall(current_user[:id]).to_a
+    friends_ids = friends.map{|friend| friend[:id]}
+    entries_of_friends_query = <<SQL
+SELECT id, user_id, SUBSTRING(body, '\n', 1) AS title, created_at
+FROM entries
+WHERE user_id IN (?)
+ORDER BY id DESC
+LIMIT 10
+SQL
+    entries_of_friends = db.xquery(entries_of_friends_query, friends_ids.join(','))
 
     comments_of_friends = []
     db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
@@ -235,7 +237,6 @@ SQL
     #   friends_map[rel[key]] ||= rel[:created_at]
     # end
     # friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
-    friends = @rs.hgetall(current_user[:id]).to_a
 
     query = <<SQL
 SELECT user_id, owner_id, date, created_at AS updated
