@@ -150,7 +150,8 @@ SQL
         #query = 'REPLACE INTO footprints (user_id,owner_id,date) VALUES (?,?,now())'
         #db.xquery(query, user_id, current_user[:id])
 
-        @fs.zadd(current_user[:id], Time.now.to_i, user_id)
+        now = Time.now
+        @fs.zadd(current_user[:id], now.to_i, "#{user_id}##{now.strftime('%F')}")
       end
     end
 
@@ -167,7 +168,7 @@ SQL
 
       db.xquery(query, user_id)
 =end
-      @fs.zrevrange(user_id, 0, count-1, with_scores: true).map{|id, time| [id.to_i, Time.at(time).strftime('%F %T')]}
+      @fs.zrevrange(user_id, 0, count-1, with_scores: true).map{|id_and_date, time| [id_and_date.split('#')[0], Time.at(time).strftime('%F %T')]}
     end
 
     PREFS = %w(
@@ -473,6 +474,20 @@ SQL
       @rs.hmset(k, *v)
     end
     puts "relation set ok"
+
+    @us.keys.each do |user_id|
+      query = <<SQL
+SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
+FROM footprints
+WHERE user_id = ?
+GROUP BY user_id, owner_id, DATE(created_at)
+ORDER BY updated DESC
+LIMIT 50
+SQL
+      footprints = db.xquery(query, user_id)
+      @fs.zadd(user_id, footprints[:updated].to_i, "#{footprints[:owner_id]}##{footprints[:date]}")
+    end
+    puts "footprints set ok"
 
     @redis.save
     o, e, s = Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
