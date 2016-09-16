@@ -268,7 +268,7 @@ SQL
       comments_for_me: comments_for_me,
       entries_of_friends: entries_of_friends,
       comments_of_friends: comments_of_friends,
-      friends: friends,
+      friends_count: friends_count,
       footprints: footprints(current_user[:id], 10)
     }
     erb :index, locals: locals
