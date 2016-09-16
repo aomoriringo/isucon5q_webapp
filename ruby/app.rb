@@ -153,7 +153,7 @@ SQL
         #db.xquery(query, user_id, current_user[:id])
 
         now = Time.now
-        @fs.zadd(current_user[:id], now.to_i, "#{user_id}##{now.strftime('%F')}")
+        @fs.zadd(user_id, now.to_i, "#{current_user[:id]}##{now.strftime('%F')}")
       end
     end
 
