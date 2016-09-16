@@ -6,4 +6,4 @@ RENAME TABLE footprints TO footprints_old, fp TO footprints;
 CREATE TABLE good_entries LIKE entries;
 ALTER TABLE good_entries ADD COLUMN title TEXT NOT NULL;
 REPLACE INTO good_entries select id, user_id, private, body, created_at, SUBSTRING_INDEX(body, '\n', 1) FROM entries WHERE id <= 500000;
-
+RENAME TABLE entries TO entries_old, good_entries TO entries;
