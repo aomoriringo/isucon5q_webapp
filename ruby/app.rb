@@ -64,20 +64,18 @@ class Isucon5::WebApp < Sinatra::Base
     end
 
     def db
-      # return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
-      unless @client
-        @client = Mysql2::Client.new(
-          host: config[:db][:host],
-          port: config[:db][:port],
-          username: config[:db][:username],
-          password: config[:db][:password],
-          database: config[:db][:database],
-          reconnect: true,
-        )
-        @client.query_options.merge!(symbolize_keys: true)
-      end
-      # Thread.current[:isucon5_db] = client
-      @client
+      return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
+      client = Mysql2::Client.new(
+        host: config[:db][:host],
+        port: config[:db][:port],
+        username: config[:db][:username],
+        password: config[:db][:password],
+        database: config[:db][:database],
+        reconnect: true,
+      )
+      client.query_options.merge!(symbolize_keys: true)
+      Thread.current[:isucon5_db] = client
+      client
     end
 
     def authenticate(email, password)
