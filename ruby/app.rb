@@ -405,6 +405,8 @@ SQL
     Open3.capture3("/bin/bash -c '/usr/bin/sudo systemctl stop redis.service'")
     Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb'")
     Open3.capture3("/bin/bash -c '/usr/bin/sudo systemctl start redis.service'")
+
+    ''
   end
 
   get '/initialize_and_backup' do
