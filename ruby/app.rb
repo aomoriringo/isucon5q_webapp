@@ -145,7 +145,7 @@ SQL
 
     def mark_footprint(user_id)
       if user_id != current_user[:id]
-        query = 'INSERT INTO footprints (user_id,owner_id) VALUES (?,?)'
+        query = 'REPLACE INTO footprints (user_id,owner_id,date) VALUES (?,?,now())'
         db.xquery(query, user_id, current_user[:id])
       end
     end
@@ -237,10 +237,9 @@ SQL
     friends = @rs.hgetall(current_user[:id]).to_a
 
     query = <<SQL
-SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
+SELECT user_id, owner_id, date, created_at AS updated
 FROM footprints
 WHERE user_id = ?
-GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
 LIMIT 10
 SQL
