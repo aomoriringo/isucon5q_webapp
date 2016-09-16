@@ -230,6 +230,7 @@ SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
 
     friends_ids = @rs.hgetall(current_user[:id]).keys
+    friends_ids_str = friends_ids.join(',')
     friends_count = friends_ids.size
     entries_of_friends_query = <<SQL
 SELECT id, user_id, title, created_at
@@ -238,17 +239,21 @@ WHERE user_id IN (?)
 ORDER BY id DESC
 LIMIT 10
 SQL
-    entries_of_friends = db.xquery(entries_of_friends_query, friends_ids.join(','))
+    entries_of_friends = db.xquery(entries_of_friends_query, friends_ids_str)
 
-    comments_of_friends = []
-    db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
-      next unless is_friend?(comment[:user_id])
-      entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
-      entry[:is_private] = (entry[:private] == 1)
-      next if entry[:is_private] && !permitted?(entry[:user_id])
-      comments_of_friends << comment
-      break if comments_of_friends.size >= 10
-    end
+    comments_of_friends_query = <<SQL
+SELECT *
+FROM comments c
+JOIN entries e ON c.entry_id = e.id
+WHERE c.user_id IN (?)
+AND (
+  e.private = 0
+  OR
+  e.private = 1 AND (e.user_id = ? OR e.user_id IN (?))
+)
+ORDER BY c.id DESC LIMIT 10
+SQL
+    comments_of_friends = db.xquery(comments_of_friends_query, friends_ids_str, current_user[:id], friends_ids_str)
 
     # friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
     # friends_map = {}
