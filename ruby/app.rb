@@ -37,7 +37,7 @@ class Isucon5::WebApp < Sinatra::Base
   # use Rack::Lineprof, profile: 'app.rb'
 
   def initialize(*args)
-    @redis = Redis.new
+    @redis = Redis.new(path: '/var/run/redis/redis.sock')
     @us = Redis::Namespace.new(:users, redis: @redis)
     @rs = Redis::Namespace.new(:relations, redis: @redis)
     @fs = Redis::Namespace.new(:footprints, redis: @redis)
