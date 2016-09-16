@@ -68,20 +68,18 @@ class Isucon5::WebApp < Sinatra::Base
     end
 
     def db
-      # return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
-      unless @client
-        @client = Mysql2::Client.new(
-          host: config[:db][:host],
-          port: config[:db][:port],
-          username: config[:db][:username],
-          password: config[:db][:password],
-          database: config[:db][:database],
-          reconnect: true,
-        )
-        @client.query_options.merge!(symbolize_keys: true)
-      end
-      # Thread.current[:isucon5_db] = client
-      @client
+      return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
+      client = Mysql2::Client.new(
+        host: config[:db][:host],
+        port: config[:db][:port],
+        username: config[:db][:username],
+        password: config[:db][:password],
+        database: config[:db][:database],
+        reconnect: true,
+      )
+      client.query_options.merge!(symbolize_keys: true)
+      Thread.current[:isucon5_db] = client
+      client
     end
 
     def authenticate(email, password)
@@ -221,7 +219,7 @@ SQL
     authenticated!
 
     profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', current_user[:id]).first
-    entries_query = 'SELECT id, SUBSTRING_INDEX(body, "\n", 1) AS title, private FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
+    entries_query = 'SELECT id, title, private FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
     entries = db.xquery(entries_query, current_user[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry }
 
@@ -238,7 +236,7 @@ SQL
     friends_ids = @rs.hgetall(current_user[:id]).keys
     friends_count = friends_ids.size
     entries_of_friends_query = <<SQL
-SELECT id, user_id, SUBSTRING(body, '\n', 1) AS title, created_at
+SELECT id, user_id, title, created_at
 FROM entries
 WHERE user_id IN (?)
 ORDER BY id DESC
@@ -360,9 +358,10 @@ SQL
 
   post '/diary/entry' do
     authenticated!
-    query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)'
-    body = (params['title'] || "タイトルなし") + "\n" + params['content']
-    db.xquery(query, current_user[:id], (params['private'] ? '1' : '0'), body)
+    query = 'INSERT INTO entries (user_id, private, body, title) VALUES (?,?,?,?)'
+    title = params['title'] || "タイトルなし"
+    body = title + "\n" + params['content']
+    db.xquery(query, current_user[:id], (params['private'] ? '1' : '0'), body, title)
     redirect "/diary/entries/#{current_user[:account_name]}"
   end
 
