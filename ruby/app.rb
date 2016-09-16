@@ -36,6 +36,7 @@ class Isucon5::WebApp < Sinatra::Base
     @redis = Redis.new
     @us = Redis::Namespace.new(:users, redis: @redis)
     @rs = Redis::Namespace.new(:relations, redis: @redis)
+    @fs = Redis::Namespace.new(:footprints, redis: @redis)
     super(*args)
   end
 
@@ -148,9 +149,27 @@ SQL
 
     def mark_footprint(user_id)
       if user_id != current_user[:id]
-        query = 'REPLACE INTO footprints (user_id,owner_id,date) VALUES (?,?,now())'
-        db.xquery(query, user_id, current_user[:id])
+        #query = 'REPLACE INTO footprints (user_id,owner_id,date) VALUES (?,?,now())'
+        #db.xquery(query, user_id, current_user[:id])
+
+        @fs.zadd(current_user[:id], Time.now.to_i, user_id)
       end
+    end
+
+    def footprints(user_id, count)
+=begin
+      query = <<SQL
+SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
+FROM footprints
+WHERE user_id = ?
+GROUP BY user_id, owner_id, DATE(created_at)
+ORDER BY updated DESC
+LIMIT #{count}
+SQL
+
+      db.xquery(query, user_id)
+=end
+      @fs.zrevrange(user_id, 0, count-1, with_scores: true).map{|id, time| [id.to_i, Time.at(time).strftime('%F %T')]}
     end
 
     PREFS = %w(
@@ -211,14 +230,16 @@ LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
 
-    entries_of_friends = []
-    #db.query('SELECT id, user_id, SUBSTRING_INDEX(body, "\n", 1) AS title, created_at FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-    db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-      next unless is_friend?(entry[:user_id])
-      entry[:title] = entry[:body].split(/\n/).first
-      entries_of_friends << entry
-      break if entries_of_friends.size >= 10
-    end
+    friends_ids = @rs.hgetall(current_user[:id]).keys
+    friends_count = friends_ids.size
+    entries_of_friends_query = <<SQL
+SELECT id, user_id, SUBSTRING(body, '\n', 1) AS title, created_at
+FROM entries
+WHERE user_id IN (?)
+ORDER BY id DESC
+LIMIT 10
+SQL
+    entries_of_friends = db.xquery(entries_of_friends_query, friends_ids.join(','))
 
     comments_of_friends = []
     db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
@@ -237,8 +258,8 @@ SQL
     #   friends_map[rel[key]] ||= rel[:created_at]
     # end
     # friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
-    friends = @rs.hgetall(current_user[:id]).to_a
 
+=begin
     query = <<SQL
 SELECT user_id, owner_id, date, created_at AS updated
 FROM footprints
@@ -247,6 +268,7 @@ ORDER BY updated DESC
 LIMIT 10
 SQL
     footprints = db.xquery(query, current_user[:id])
+=end
 
     locals = {
       profile: profile || {},
@@ -254,8 +276,8 @@ SQL
       comments_for_me: comments_for_me,
       entries_of_friends: entries_of_friends,
       comments_of_friends: comments_of_friends,
-      friends: friends,
-      footprints: footprints
+      friends_count: friends_count,
+      footprints: footprints(current_user[:id], 10)
     }
     erb :index, locals: locals
   end
@@ -356,6 +378,8 @@ SQL
 
   get '/footprints' do
     authenticated!
+
+=begin
     query = <<SQL
 SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
 FROM footprints
@@ -365,7 +389,9 @@ ORDER BY updated DESC
 LIMIT 50
 SQL
     footprints = db.xquery(query, current_user[:id])
-    erb :footprints, locals: { footprints: footprints }
+=end
+
+    erb :footprints, locals: { footprints: footprints(current_user[:id], 50) }
   end
 
   get '/friends' do
