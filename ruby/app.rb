@@ -404,7 +404,7 @@ SQL
     #   friends[rel[key]] ||= rel[:created_at]
     # end
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
-    list = @rs.hgetall(current_user[:id]).to_a
+    list = @rs.hgetall(current_user[:id]).sort_by{|k, v| v}.reverse
     erb :friends, locals: { friends: list }
   end
 
@@ -460,6 +460,7 @@ SQL
     query = <<SQL
 SELECT *
 FROM relations
+ORDER BY ASC
 ;
 SQL
     require 'set'
