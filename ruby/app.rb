@@ -11,6 +11,8 @@ require 'redis'
 require 'redis-namespace'
 require 'oj'
 require 'open3'
+require 'rack-lineprof'
+
 Oj.default_options = {
   symbol_keys: true
 }
@@ -31,6 +33,8 @@ module Isucon5
 end
 
 class Isucon5::WebApp < Sinatra::Base
+
+  use Rack::Lineprof, profile: 'app.rb'
 
   def initialize(*args)
     @redis = Redis.new

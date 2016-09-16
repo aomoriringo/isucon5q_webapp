@@ -1,7 +1,17 @@
+GIT
+  remote: git://github.com/kainosnoema/rack-lineprof.git
+  revision: 33be9c3e597bd6e4c664486e272483baf60af720
+  specs:
+    rack-lineprof (0.0.3)
+      rack (~> 1.5)
+      rblineprof (~> 0.3.6)
+      term-ansicolor (~> 1.3)
+
 GEM
   remote: https://rubygems.org/
   specs:
     backports (3.6.8)
+    debugger-ruby_core_source (1.3.8)
     erubis (2.7.0)
     kgio (2.10.0)
     multi_json (1.12.1)
@@ -15,6 +25,8 @@ GEM
     rack-test (0.6.3)
       rack (>= 1.0)
     raindrops (0.15.0)
+    rblineprof (0.3.7)
+      debugger-ruby_core_source (~> 1.3)
     redis (3.3.1)
     redis-namespace (1.5.2)
       redis (~> 3.0, >= 3.0.4)
@@ -29,7 +41,10 @@ GEM
       rack-test
       sinatra (~> 1.4.0)
       tilt (>= 1.3, < 3)
+    term-ansicolor (1.3.2)
+      tins (~> 1.0)
     tilt (2.0.1)
+    tins (1.12.0)
     unicorn (4.9.0)
       kgio (~> 2.6)
       rack
@@ -43,6 +58,7 @@ DEPENDENCIES
   mysql2
   mysql2-cs-bind
   oj
+  rack-lineprof!
   redis
   redis-namespace
   sinatra
