@@ -78,7 +78,7 @@
     <% comments_of_friends.each do |comment| %>
     <div class="friend-comment">
       <ul class="list-group">
-        <% comment_owner = get_user(comment[:author_id]) %>
+        <% comment_owner = get_user(comment[:user_id]) %>
         <% entry_owner = get_user(comment[:owner_id]) %>
         <li class="list-group-item comment-from-to">
           <a href="/profile/<%= comment_owner[:account_name] %>"><%= comment_owner[:nick_name] %>さん</a>から

@@ -246,18 +246,18 @@ SQL
     entries_of_friends = db.xquery(entries_of_friends_query, friends_ids_str)
 
     comments_of_friends_query = <<SQL
-SELECT c.user_id AS author_id, e.user_id AS owner_id, c.created_at AS created_at, e.id AS entry_id, c.comment AS comment
+SELECT c.user_id AS user_id, e.user_id AS owner_id, c.created_at AS created_at, e.id AS entry_id, c.comment AS comment
 FROM comments c
 JOIN entries e ON c.entry_id = e.id
-WHERE c.user_id IN (?)
+WHERE c.user_id IN (#{friends_ids_str})
 AND (
   e.private = 0
   OR
-  e.private = 1 AND (e.user_id = ? OR e.user_id IN (?))
+  e.private = 1 AND (e.user_id = ? OR e.user_id IN (#{friends_ids_str}))
 )
 ORDER BY c.created_at DESC LIMIT 10
 SQL
-    comments_of_friends = db.xquery(comments_of_friends_query, friends_ids_str, current_user[:id], friends_ids_str)
+    comments_of_friends = db.xquery(comments_of_friends_query, current_user[:id])
 
     # friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
     # friends_map = {}
