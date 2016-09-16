@@ -151,6 +151,19 @@ SQL
       end
     end
 
+    def footprints(user_id, count)
+      query = <<SQL
+SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
+FROM footprints
+WHERE user_id = ?
+GROUP BY user_id, owner_id, DATE(created_at)
+ORDER BY updated DESC
+LIMIT ?
+SQL
+
+      db.xquery(query, user_id, count)
+    end
+
     PREFS = %w(
       未入力
       北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 新潟県 富山県
@@ -238,6 +251,7 @@ SQL
     # end
     # friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
 
+=begin
     query = <<SQL
 SELECT user_id, owner_id, date, created_at AS updated
 FROM footprints
@@ -246,6 +260,7 @@ ORDER BY updated DESC
 LIMIT 10
 SQL
     footprints = db.xquery(query, current_user[:id])
+=end
 
     locals = {
       profile: profile || {},
@@ -254,7 +269,7 @@ SQL
       entries_of_friends: entries_of_friends,
       comments_of_friends: comments_of_friends,
       friends: friends,
-      footprints: footprints
+      footprints: footprints(current_user[:id], 10)
     }
     erb :index, locals: locals
   end
@@ -355,6 +370,8 @@ SQL
 
   get '/footprints' do
     authenticated!
+
+=begin
     query = <<SQL
 SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
 FROM footprints
@@ -364,7 +381,9 @@ ORDER BY updated DESC
 LIMIT 50
 SQL
     footprints = db.xquery(query, current_user[:id])
-    erb :footprints, locals: { footprints: footprints }
+=end
+
+    erb :footprints, locals: { footprints: footprints(current_user[:id], 50) }
   end
 
   get '/friends' do
