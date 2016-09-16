@@ -255,7 +255,7 @@ AND (
   OR
   e.private = 1 AND (e.user_id = ? OR e.user_id IN (?))
 )
-ORDER BY e.created_at DESC LIMIT 10
+ORDER BY c.created_at DESC LIMIT 10
 SQL
     comments_of_friends = db.xquery(comments_of_friends_query, friends_ids_str, current_user[:id], friends_ids_str)
 
