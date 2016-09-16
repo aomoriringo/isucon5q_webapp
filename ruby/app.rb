@@ -1,5 +1,5 @@
 
-ENV['RACK_ENV'] = 'development'
+# ENV['RACK_ENV'] = 'development'
 
 require 'sinatra/base'
 require 'mysql2'
@@ -34,7 +34,7 @@ end
 
 class Isucon5::WebApp < Sinatra::Base
 
-  #use Rack::Lineprof, profile: 'app.rb'
+  # use Rack::Lineprof, profile: 'app.rb'
 
   def initialize(*args)
     @redis = Redis.new
@@ -228,7 +228,7 @@ SELECT c.id AS id, c.entry_id AS entry_id, c.user_id AS user_id, c.comment AS co
 FROM comments c
 JOIN entries e ON c.entry_id = e.id
 WHERE e.user_id = ?
-ORDER BY c.created_at DESC
+ORDER BY c.id DESC
 LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
@@ -255,7 +255,7 @@ AND (
   OR
   e.private = 1 AND (e.user_id = ? OR e.user_id IN (#{friends_ids_str}))
 )
-ORDER BY c.created_at DESC LIMIT 10
+ORDER BY c.id DESC LIMIT 10
 SQL
     comments_of_friends = db.xquery(comments_of_friends_query, current_user[:id])
 
@@ -412,7 +412,7 @@ SQL
     #   friends[rel[key]] ||= rel[:created_at]
     # end
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
-    list = @rs.hgetall(current_user[:id]).sort_by{|k, v| v}.reverse
+    list = @rs.hgetall(current_user[:id])#.sort_by{|k, v| v}.reverse
     erb :friends, locals: { friends: list }
   end
 
