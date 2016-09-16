@@ -158,10 +158,10 @@ FROM footprints
 WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
-LIMIT ?
+LIMIT #{count}
 SQL
 
-      db.xquery(query, user_id, count)
+      db.xquery(query, user_id)
     end
 
     PREFS = %w(
