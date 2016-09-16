@@ -117,7 +117,7 @@ SQL
     end
 
     def get_user(user_id)
-      user = db.xquery('SELECT * FROM users WHERE id = ?', user_id).first
+      user = Oj.load(@us.get(user_id)) || db.xquery('SELECT * FROM users WHERE id = ?', user_id).first
       raise Isucon5::ContentNotFound unless user
       user
     end
