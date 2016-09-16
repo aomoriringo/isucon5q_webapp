@@ -401,9 +401,9 @@ SQL
     db.query("DELETE FROM entries WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
 
-    system('sudo systemctl stop redis.service')
-    system('sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb')
-    system('sudo systemctl start redis.service')
+    system("bash -c 'sudo systemctl stop redis.service'")
+    system("bash -c 'sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb'")
+    system("bash -c 'sudo systemctl start redis.service'")
   end
 
   get '/initialize_and_backup' do
@@ -447,7 +447,7 @@ SQL
     puts "relation set ok"
 
     @redis.save
-    system('sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb')
+    system("bash -c 'sudo cp /var/lib/redis/init.rdb /var/lib/redis/dump.rdb")
     puts "redis dump backup done!!"
 
     ''
