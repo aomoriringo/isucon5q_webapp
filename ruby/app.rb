@@ -246,7 +246,7 @@ SQL
     entries_of_friends = db.xquery(entries_of_friends_query, friends_ids_str)
 
     comments_of_friends_query = <<SQL
-SELECT c.user_id as user_id, e.user_id AS owner_id, c.created_at AS created_at, e.id AS entry_id, c.comment AS comment
+SELECT c.user_id AS author_id, e.user_id AS owner_id, c.created_at AS created_at, e.id AS entry_id, c.comment AS comment
 FROM comments c
 JOIN entries e ON c.entry_id = e.id
 WHERE c.user_id IN (?)
