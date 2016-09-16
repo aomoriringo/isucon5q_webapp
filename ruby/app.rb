@@ -36,6 +36,7 @@ class Isucon5::WebApp < Sinatra::Base
     @redis = Redis.new
     @us = Redis::Namespace.new(:users, redis: @redis)
     @rs = Redis::Namespace.new(:relations, redis: @redis)
+    @fs = Redis::Namespace.new(:footprints, redis: @redis)
     super(*args)
   end
 
@@ -146,12 +147,15 @@ SQL
 
     def mark_footprint(user_id)
       if user_id != current_user[:id]
-        query = 'REPLACE INTO footprints (user_id,owner_id,date) VALUES (?,?,now())'
-        db.xquery(query, user_id, current_user[:id])
+        #query = 'REPLACE INTO footprints (user_id,owner_id,date) VALUES (?,?,now())'
+        #db.xquery(query, user_id, current_user[:id])
+
+        @fs.zadd(current_user[:id], Time.now.to_i, user_id)
       end
     end
 
     def footprints(user_id, count)
+=begin
       query = <<SQL
 SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
 FROM footprints
@@ -162,6 +166,8 @@ LIMIT #{count}
 SQL
 
       db.xquery(query, user_id)
+=end
+      @fs.zrevrange(user_id, 0, count-1, with_scores: true).map{|id, time| [id.to_i, Time.at(time).strftime('%F %T')]}
     end
 
     PREFS = %w(
