@@ -486,8 +486,9 @@ GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
 LIMIT 50
 SQL
-      footprints = db.xquery(query, user_id)
-      @fs.zadd(user_id, footprints[:updated].to_i, "#{footprints[:owner_id]}##{footprints[:date]}")
+      db.xquery(query, user_id).each do |fp|
+        @fs.zadd(user_id, fp[:updated].to_i, "#{fp[:owner_id]}##{fp[:date]}")
+      end
     end
     puts "footprints set ok"
 
