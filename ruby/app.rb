@@ -64,20 +64,18 @@ class Isucon5::WebApp < Sinatra::Base
     end
 
     def db
-      # return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
-      unless @client
-        @client = Mysql2::Client.new(
-          host: config[:db][:host],
-          port: config[:db][:port],
-          username: config[:db][:username],
-          password: config[:db][:password],
-          database: config[:db][:database],
-          reconnect: true,
-        )
-        @client.query_options.merge!(symbolize_keys: true)
-      end
-      # Thread.current[:isucon5_db] = client
-      @client
+      return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
+      client = Mysql2::Client.new(
+        host: config[:db][:host],
+        port: config[:db][:port],
+        username: config[:db][:username],
+        password: config[:db][:password],
+        database: config[:db][:database],
+        reconnect: true,
+      )
+      client.query_options.merge!(symbolize_keys: true)
+      Thread.current[:isucon5_db] = client
+      client
     end
 
     def authenticate(email, password)
@@ -153,7 +151,7 @@ SQL
         #db.xquery(query, user_id, current_user[:id])
 
         now = Time.now
-        @fs.zadd(current_user[:id], now.to_i, "#{user_id}##{now.strftime('%F')}")
+        @fs.zadd(user_id, now.to_i, "#{current_user[:id]}##{now.strftime('%F')}")
       end
     end
 
@@ -405,7 +403,7 @@ SQL
     #   friends[rel[key]] ||= rel[:created_at]
     # end
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
-    list = @rs.hgetall(current_user[:id]).to_a
+    list = @rs.hgetall(current_user[:id]).sort_by{|k, v| v}.reverse
     erb :friends, locals: { friends: list }
   end
 
@@ -461,6 +459,7 @@ SQL
     query = <<SQL
 SELECT *
 FROM relations
+ORDER BY ASC
 ;
 SQL
     require 'set'
