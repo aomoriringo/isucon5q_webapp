@@ -468,7 +468,6 @@ SQL
     query = <<SQL
 SELECT *
 FROM relations
-ORDER BY ASC
 ;
 SQL
     require 'set'
