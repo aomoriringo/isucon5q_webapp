@@ -10,6 +10,7 @@ require "tilt/erubis"
 require 'redis'
 require 'redis-namespace'
 require 'oj'
+require 'open3'
 Oj.default_options = {
   symbol_keys: true
 }
@@ -399,6 +400,19 @@ SQL
     db.query("DELETE FROM footprints WHERE id > 500000")
     db.query("DELETE FROM entries WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
+
+    Open3.capture3("/bin/bash -c '/usr/bin/sudo systemctl stop redis.service'")
+    Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb'")
+    Open3.capture3("/bin/bash -c '/usr/bin/sudo systemctl start redis.service'")
+
+    ''
+  end
+
+  get '/initialize_and_backup' do
+    db.query("DELETE FROM relations WHERE id > 500000")
+    db.query("DELETE FROM footprints WHERE id > 500000")
+    db.query("DELETE FROM entries WHERE id > 500000")
+    db.query("DELETE FROM comments WHERE id > 1500000")
     # cache in memory
     query = <<SQL
 SELECT *
@@ -433,8 +447,16 @@ SQL
       @rs.hmset(k, *v)
     end
     puts "relation set ok"
-    ''
+
+    @redis.save
+    o, e, s = Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
+    puts "redis dump backup done!!"
+
+    "#{o}\n#{e}\n#{s}"
   end
+
+
 end
+
 
 $stdout.sync = true
