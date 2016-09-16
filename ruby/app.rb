@@ -34,7 +34,7 @@ end
 
 class Isucon5::WebApp < Sinatra::Base
 
-  use Rack::Lineprof, profile: 'app.rb'
+  #use Rack::Lineprof, profile: 'app.rb'
 
   def initialize(*args)
     @redis = Redis.new
@@ -500,6 +500,8 @@ SQL
       end
     end
     puts "footprints set ok"
+
+    db.query('ALTER TABLE comments ADD INDEX user_id (user_id)')
 
     @redis.save
     o, e, s = Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
