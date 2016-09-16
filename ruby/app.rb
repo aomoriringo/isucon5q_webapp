@@ -42,8 +42,6 @@ class Isucon5::WebApp < Sinatra::Base
 
   configure :development do
     register Sinatra::Reloader
-    # in development env, use TCP Socket instead of Unix Domain Socket
-    ENV['ISUCON5_DB_HOST'] = '127.0.0.1'
   end
   use Rack::Session::Cookie
   set :erb, escape_html: true
