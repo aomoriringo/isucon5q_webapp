@@ -122,13 +122,13 @@ SQL
     end
 
     def get_user(user_id)
-      user = Oj.load(@us.get(user_id)) || db.xquery('SELECT * FROM users WHERE id = ?', user_id).first
+      user = Oj.load(@us.get(user_id)) || db.xquery('SELECT id, account_name, nick_name, email, passhash FROM users WHERE id = ?', user_id).first
       raise Isucon5::ContentNotFound unless user
       user
     end
 
     def user_from_account(account_name)
-      user = db.xquery('SELECT * FROM users WHERE account_name = ?', account_name).first
+      user = db.xquery('SELECT id, account_name, nick_name, email, passhash FROM users WHERE account_name = ?', account_name).first
       raise Isucon5::ContentNotFound unless user
       user
     end
@@ -218,7 +218,7 @@ SQL
   get '/' do
     authenticated!
 
-    profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', current_user[:id]).first
+    profile = db.xquery('SELECT first_name, last_name, sex, birthday, pref FROM profiles WHERE user_id = ?', current_user[:id]).first
     entries_query = 'SELECT id, title, private FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
     entries = db.xquery(entries_query, current_user[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry }
@@ -293,12 +293,12 @@ SQL
   get '/profile/:account_name' do
     authenticated!
     owner = user_from_account(params['account_name'])
-    prof = db.xquery('SELECT * FROM profiles WHERE user_id = ?', owner[:id]).first
+    prof = db.xquery('SELECT first_name, last_name, sex, birthday, pref FROM profiles WHERE user_id = ?', owner[:id]).first
     prof = {} unless prof
     query = if permitted?(owner[:id])
-              'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
+              'SELECT id, private, body, created_at, title FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
             else
-              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at LIMIT 5'
+              'SELECT id, private, body, created_at, title FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at LIMIT 5'
             end
     entries = db.xquery(query, owner[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
@@ -335,9 +335,9 @@ SQL
     authenticated!
     owner = user_from_account(params['account_name'])
     query = if permitted?(owner[:id])
-              'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at DESC LIMIT 20'
+              'SELECT id, private, body, created_at, title FROM entries WHERE user_id = ? ORDER BY created_at DESC LIMIT 20'
             else
-              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at DESC LIMIT 20'
+              'SELECT id, private, body, created_at, title FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at DESC LIMIT 20'
             end
     entries = db.xquery(query, owner[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
@@ -347,7 +347,7 @@ SQL
 
   get '/diary/entry/:entry_id' do
     authenticated!
-    entry = db.xquery('SELECT * FROM entries WHERE id = ?', params['entry_id']).first
+    entry = db.xquery('SELECT id, user_id, private, body, created_at, title FROM entries WHERE id = ?', params['entry_id']).first
     raise Isucon5::ContentNotFound unless entry
     entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
     entry[:is_private] = (entry[:private] == 1)
@@ -356,7 +356,7 @@ SQL
       # raise Isucon5::PermissionDenied
       return status 403
     end
-    comments = db.xquery('SELECT * FROM comments WHERE entry_id = ?', entry[:id])
+    comments = db.xquery('SELECT user_id, comment, created_at FROM comments WHERE entry_id = ?', entry[:id])
     mark_footprint(owner[:id])
     erb :entry, locals: { owner: owner, entry: entry, comments: comments }
   end
