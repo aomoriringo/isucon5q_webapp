@@ -10,6 +10,7 @@ require "tilt/erubis"
 require 'redis'
 require 'redis-namespace'
 require 'oj'
+require 'open3'
 Oj.default_options = {
   symbol_keys: true
 }
@@ -401,9 +402,9 @@ SQL
     db.query("DELETE FROM entries WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
 
-    system("bash -c 'sudo systemctl stop redis.service'")
-    system("bash -c 'sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb'")
-    system("bash -c 'sudo systemctl start redis.service'")
+    Open3.capture3("bash -c 'sudo systemctl stop redis.service'")
+    Open3.capture3("bash -c 'sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb'")
+    Open3.capture3("bash -c 'sudo systemctl start redis.service'")
   end
 
   get '/initialize_and_backup' do
@@ -447,7 +448,7 @@ SQL
     puts "relation set ok"
 
     @redis.save
-    system("bash -c 'sudo cp /var/lib/redis/init.rdb /var/lib/redis/dump.rdb")
+    Open3.capture3("bash -c 'sudo cp /var/lib/redis/init.rdb /var/lib/redis/dump.rdb'")
     puts "redis dump backup done!!"
 
     ''
