@@ -500,8 +500,6 @@ SQL
     end
     puts "footprints set ok"
 
-    db.query('ALTER TABLE comments ADD INDEX user_id (user_id)')
-
     @redis.save
     o, e, s = Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
     puts "redis dump backup done!!"
