@@ -404,7 +404,7 @@ SQL
     #   friends[rel[key]] ||= rel[:created_at]
     # end
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
-    list = @rs.hgetall(current_user[:id]).map{|id, ts| [id, Time.at(ts).strftime('%F %T')]}
+    list = @rs.hgetall(current_user[:id]).to_a
     erb :friends, locals: { friends: list }
   end
 
@@ -417,7 +417,7 @@ SQL
       end
       # db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', current_user[:id], user[:id], user[:id], current_user[:id])
       # ts = db.xquery('SELECT created_at FROM relations WHERE one = ? AND another = ?;', current_user[:id], user[:id]).first[:created_at]
-      ts = Time.now.to_i
+      ts = Time.now.strftime('%F %T')
       @rs.hset(current_user[:id], user[:id], ts)
       @rs.hset(user[:id], current_user[:id], ts)
       redirect '/friends'
