@@ -156,6 +156,7 @@ SQL
 
         now = Time.now
         @fs.zadd(user_id, now.to_i, "#{current_user[:id]}##{now.strftime('%F')}")
+        @fs.del("#{user_id}_p")
       end
     end
 
