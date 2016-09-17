@@ -296,9 +296,9 @@ SQL
     prof = db.xquery('SELECT first_name, last_name, sex, birthday, pref FROM profiles WHERE user_id = ?', owner[:id]).first
     prof = {} unless prof
     query = if permitted?(owner[:id])
-              'SELECT id, private, body, created_at, title FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
+              'SELECT id, private, LEFT(body,121), created_at, title FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
             else
-              'SELECT id, private, body, created_at, title FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at LIMIT 5'
+              'SELECT id, private, LEFT(body,121), created_at, title FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at LIMIT 5'
             end
     entries = db.xquery(query, owner[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
