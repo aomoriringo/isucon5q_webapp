@@ -419,7 +419,7 @@ SQL
 
   def friends_page
     friends = @rs.hgetall(current_user[:id]).map{|k, v| [get_user(k), v]}
-    rendered = Erubis::Eruby.load_file('views/friends.erb').result({friends: friends})
+    rendered = erb :friends, locals: { friends: friends }
     @rs.set("#{current_user[:id]}_p", rendered)
     rendered
   end
