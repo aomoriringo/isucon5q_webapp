@@ -454,7 +454,7 @@ SQL
     Open3.capture3("/bin/bash -c '/usr/bin/sudo systemctl start redis.service'")
 
     @us.keys.each do |user_id|
-      rendered = erb :friends, locals: { friends: @rs.hgetall(current_user[:id]).map{|k, v| [get_user(k), v]} }
+      rendered = erb(:friends, locals: { friends: @rs.hgetall(user_id).map{|k, v| [get_user(k), v]} })
       @rs.set("#{current_user[:id]}_p", rendered)
     end
 
