@@ -399,8 +399,14 @@ LIMIT 50
 SQL
     footprints = db.xquery(query, current_user[:id])
 =end
+    # erb :footprints, locals: { footprints: footprints(current_user[:id], 50) }
+    @fs.get("#{current_user[:id]}_p") || footprints_page(current_user[:id])
+  end
 
-    erb :footprints, locals: { footprints: footprints(current_user[:id], 50) }
+  def footprints_page(user_id)
+    rendered = erb :footprints, locals: { footprints: footprints(user_id, 50) }
+    @fs.set("#{user_id}_p", rendered)
+    rendered
   end
 
   get '/friends' do
