@@ -412,8 +412,15 @@ SQL
     #   friends[rel[key]] ||= rel[:created_at]
     # end
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
-    list = @rs.hgetall(current_user[:id])#.sort_by{|k, v| v}.reverse
-    erb :friends, locals: { friends: list }
+    # list = @rs.hgetall(current_user[:id])#.sort_by{|k, v| v}.reverse
+    #erb :friends, locals: { friends: list }
+    @rs.get("#{current_user[:id]}_p") || friends_page
+  end
+
+  def friends_page
+    rendered = Erubis::Eruby.load_file('views/friends.erb').result({friends: @rs.hgetall(current_user[:id])})
+    @rs.set("#{current_user[:id]}_p", rendered)
+    rendered
   end
 
   post '/friends/:account_name' do
@@ -428,6 +435,9 @@ SQL
       ts = Time.now.strftime('%F %T')
       @rs.hset(current_user[:id], user[:id], ts)
       @rs.hset(user[:id], current_user[:id], ts)
+
+      @rs.del("#{current_user[:id]}_p")
+      @rs.del("#{user[:id]}_p")
       redirect '/friends'
     end
   end
