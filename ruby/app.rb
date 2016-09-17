@@ -156,7 +156,10 @@ SQL
 
         now = Time.now
         @fs.zadd(user_id, now.to_i, "#{current_user[:id]}##{now.strftime('%F')}")
-        @fs.del("#{user_id}_p")
+
+        Thread.new do
+          footprints_page(user_id)
+        end
       end
     end
 
@@ -401,13 +404,12 @@ SQL
     footprints = db.xquery(query, current_user[:id])
 =end
     # erb :footprints, locals: { footprints: footprints(current_user[:id], 50) }
-    @fs.get("#{current_user[:id]}_p") || footprints_page(current_user[:id])
+    @fs.get("#{current_user[:id]}_p") #|| footprints_page(current_user[:id])
   end
 
   def footprints_page(user_id)
     rendered = erb :footprints, locals: { footprints: footprints(user_id, 50) }
     @fs.set("#{user_id}_p", rendered)
-    rendered
   end
 
   get '/friends' do
@@ -421,14 +423,13 @@ SQL
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
     # list = @rs.hgetall(current_user[:id])#.sort_by{|k, v| v}.reverse
     #erb :friends, locals: { friends: list }
-    @rs.get("#{current_user[:id]}_p") || friends_page(current_user[:id])
+    @rs.get("#{current_user[:id]}_p") # || friends_page(current_user[:id])
   end
 
   def friends_page(user_id)
     friends = @rs.hgetall(user_id).map{|k, v| [get_user(k), v]}
     rendered = erb :friends, locals: { friends: friends }
     @rs.set("#{user_id}_p", rendered)
-    rendered
   end
 
   post '/friends/:account_name' do
@@ -444,8 +445,12 @@ SQL
       @rs.hset(current_user[:id], user[:id], ts)
       @rs.hset(user[:id], current_user[:id], ts)
 
-      @rs.del("#{current_user[:id]}_p")
-      @rs.del("#{user[:id]}_p")
+#      @rs.del("#{current_user[:id]}_p")
+#      @rs.del("#{user[:id]}_p")
+      Thread.new do
+        footprints_page(current_user[:id])
+        footprints_page(user[:id])
+      end
       redirect '/friends'
     end
   end
