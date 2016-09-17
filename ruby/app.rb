@@ -414,13 +414,13 @@ SQL
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
     # list = @rs.hgetall(current_user[:id])#.sort_by{|k, v| v}.reverse
     #erb :friends, locals: { friends: list }
-    @rs.get("#{current_user[:id]}_p") || friends_page
+    @rs.get("#{current_user[:id]}_p") || friends_page(current_user[:id])
   end
 
-  def friends_page
-    friends = @rs.hgetall(current_user[:id]).map{|k, v| [get_user(k), v]}
+  def friends_page(user_id)
+    friends = @rs.hgetall(user_id).map{|k, v| [get_user(k), v]}
     rendered = erb :friends, locals: { friends: friends }
-    @rs.set("#{current_user[:id]}_p", rendered)
+    @rs.set("#{user_id}_p", rendered)
     rendered
   end
 
@@ -453,12 +453,9 @@ SQL
     Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/backup.rdb /var/lib/redis/dump.rdb'")
     Open3.capture3("/bin/bash -c '/usr/bin/sudo systemctl start redis.service'")
 
-    @us.keys.each do |user_id|
-      rendered = erb(:friends, locals: { friends: @rs.hgetall(user_id).map{|k, v| [get_user(k), v]} })
-      @rs.set("#{current_user[:id]}_p", rendered)
-    end
+    sleep 2
 
-      ''
+    ''
   end
 
   get '/initialize_and_backup' do
@@ -515,6 +512,11 @@ SQL
       end
     end
     puts "footprints set ok"
+
+    @us.keys.each do |user_id|
+      friends_page(user_id)
+    end
+    puts "friendpage pre-render ok"
 
     @redis.save
     o, e, s = Open3.capture3("/bin/bash -c '/usr/bin/sudo cp /var/lib/redis/dump.rdb /var/lib/redis/backup.rdb'")
